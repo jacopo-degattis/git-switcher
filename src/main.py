@@ -1,7 +1,9 @@
 import yaml
 import rumps
 import subprocess
+import pprint
 from yaml.loader import FullLoader
+from pprint import pprint
 
 UPDATE_COMMAND = ["/usr/local/bin/git", "config", "--global", "user.email"]
 
@@ -16,20 +18,10 @@ class GitSwitchApp(object):
         self._create_entries_from_config()
         self._toggle_btns_from_value(subprocess.check_output(UPDATE_COMMAND).decode().strip())
 
-        self.window = rumps.Window(
-            message='Insert emails separated by a comma',
-            title='Add new email', default_text='test@example.com',
-            ok=None,
-            cancel=True,
-            dimensions=(200, 25)
-        )
-
     def _write_to_file(self, email):
         documents = None
         with open("./config.yaml", "w") as config:
-            documents = yaml.dump([{"accounts": [*self.config["accounts"], str(email)]}], config)
-            # del self.app.menu["jacopo.degattis@gmail.com"]
-            self.app.menu.insert_after(self.config["accounts"][-1], rumps.MenuItem(title=str(email), callback=lambda x: print("CIAO")))
+            documents = yaml.dump([{"accounts": [*self.config["accounts"], email]}], config)
         return documents
 
     def _load_config_file(self, config_file="./config.yaml"):
@@ -46,19 +38,51 @@ class GitSwitchApp(object):
         if not "accounts" in self.config.keys():
             raise Exception("Invalid config file")
 
-        accounts = self.config["accounts"]
-
+        accounts = self.config["accounts"] or []
+        
         for index, account in enumerate(accounts):
-            self.buttons.append(rumps.MenuItem(title=account, callback=self._btn_callback, key=str(index+1)))
+            btn = rumps.MenuItem(
+                title=account,
+                callback=self._btn_callback,
+                key=str(index+1)
+            )
 
-        self.app.menu = [*self.buttons, rumps.MenuItem(title="Test", callback=lambda _: self._handle_window())]
+            btn.add(
+                rumps.MenuItem(
+                    title="Delete",
+                    callback=lambda sender: self._remove_from_list(sender, account)
+                )
+            )
+
+            self.buttons.append(btn)
+
+        self.app.menu = [
+            *self.buttons,
+            rumps.MenuItem(
+                title="+ Add",
+                callback=lambda _: self._handle_window()
+            )
+        ]
+
+    def _remove_from_list(self, sender, email):
+        del self.app.menu[email]
+        # TODO: remove email also from local yaml / json storage file
 
     def _toggle_btns_from_value(self, value):
         for entry in self.buttons:
             entry.state = 1 if entry.title == value else 0
 
     def _handle_window(self):
-        response = self.window.run()
+        win = rumps.Window(
+            message='Insert emails separated by a comma',
+            default_text='test@example.com',
+            title='Add new email',
+            ok=None,
+            cancel=True,
+            dimensions=(200, 25)
+        )
+
+        response = win.run()
         
         if not response.clicked:
             return
@@ -66,7 +90,25 @@ class GitSwitchApp(object):
         if not response.text:
             return
 
-        self._write_to_file(response.text)
+        self._write_to_file(str(response.text))
+        
+        new_entry = rumps.MenuItem(
+            title=str(response.text),
+            callback=self._btn_callback,
+            key=str(len(self.app.menu) - 1)
+        )
+        new_entry.add(           
+            rumps.MenuItem(
+                title="Delete",
+                callback=lambda sender: self._remove_from_list(sender, str(response.text)),
+            )
+        )
+        self.buttons = [*self.buttons, new_entry]
+        
+        self.app.menu.insert_before(
+            "+ Add",
+            new_entry
+        )
 
     def _btn_callback(self, sender):
         subprocess.call([*UPDATE_COMMAND, sender.title])
