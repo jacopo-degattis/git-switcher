@@ -1,7 +1,7 @@
 from setuptools import setup
 
 APP = ['src/main.py']
-DATA_FILES = ["src/config.yaml"]
+DATA_FILES = ["src/config.json"]
 OPTIONS = {
     'argv_emulation': True,
     'iconfile': 'src/git-logo.png',

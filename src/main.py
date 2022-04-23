@@ -67,7 +67,7 @@ class GitSwitchApp(object):
     def _handle_window(self):
         win = rumps.Window(
             message='Insert emails separated by a comma',
-            default_text=''.join(f"{x}\n" for x in self.config["accounts"]),
+            default_text=''.join(f"{x}\n" for x in self.config["accounts"]) or '',
             title='Add new email',
             ok=None,
             cancel=True,
