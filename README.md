@@ -1,5 +1,7 @@
 # Git Switcher
 
+![preview](./preview.png)
+
 ## Description
 
 Switch between different github accounts using a simple menu bar app
