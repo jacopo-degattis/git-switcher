@@ -30,7 +30,8 @@ class GitSwitchApp(object):
         return data
 
     def _create_entries_from_config(self):
-        
+        curr_account = subprocess.check_output(UPDATE_COMMAND).decode().strip()
+
         if not self.config:
             raise Exception("No config file found. Please create a valid config.json file")
 
@@ -45,6 +46,9 @@ class GitSwitchApp(object):
                 callback=self._btn_callback,
                 key=str(index+1)
             )
+
+            if account == curr_account:
+                btn.state = 1
 
             self.buttons.append(btn)
 
