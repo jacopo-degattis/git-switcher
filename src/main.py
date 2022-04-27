@@ -69,6 +69,8 @@ class GitSwitchApp(object):
             print("LINE => ", x)
 
     def _handle_window(self):
+        curr_account = subprocess.check_output(UPDATE_COMMAND).decode().strip()
+
         win = rumps.Window(
             message='Insert emails separated by a comma',
             default_text=''.join(f"{x}\n" for x in self.config["accounts"]) or '',
@@ -97,6 +99,9 @@ class GitSwitchApp(object):
                     key=str(len(self.app.menu) - 1)
                 )
 
+                if x == curr_account:
+                    new_entry.state = 1
+                
                 self.buttons = [*self.buttons, new_entry]
                 self.config["accounts"].append(x)
 
@@ -104,6 +109,7 @@ class GitSwitchApp(object):
                     "+ Add",
                     new_entry
                 )
+                
 
         new_config = self.config["accounts"]
         for y in new_config:
